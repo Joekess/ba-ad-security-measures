@@ -1,0 +1,373 @@
+from pathlib import Path
+
+html = """<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AD-Sicherheitsmaßnahmen – Kurzbericht & Selbst-Check</title>
+  <style>
+    :root{
+      --bg:#f7fafc; --bg2:#eef4f8; --card:#ffffff; --text:#183046; --muted:#445b70;
+      --border:#d7e3ec; --accent:#4f8cff; --accent2:#6ed3c1; --shadow:0 12px 32px rgba(34,60,80,.10);
+      --radius:20px; --mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+      --sans:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:var(--sans); color:var(--text);
+      background:
+        radial-gradient(1000px 500px at 0% -10%, rgba(79,140,255,.10), transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, rgba(110,211,193,.12), transparent 55%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+    }
+    .wrap{max-width:1080px;margin:0 auto;padding:34px 20px 80px}
+    header{margin-bottom:24px}
+    .header-card{
+      background:linear-gradient(135deg, rgba(79,140,255,.08), rgba(110,211,193,.10));
+      border:1px solid var(--border); border-radius:24px; box-shadow:var(--shadow); padding:24px;
+    }
+    h1{margin:0;font-size:28px;letter-spacing:.2px}
+    .card{
+      background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+      box-shadow:var(--shadow); padding:22px;
+    }
+    section{margin-top:20px}
+    .section-title{margin-bottom:12px}
+    .section-title h2{margin:0;font-size:20px}
+    .muted{color:var(--muted)}
+    .summary-text{color:var(--muted);line-height:1.78;font-size:15px}
+    .summary-text p{text-align:justify;margin:0 0 16px}
+    .summary-text p:last-child{margin-bottom:0}
+
+    .horizontal-results{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    @media (max-width:980px){.horizontal-results{grid-template-columns:1fr 1fr}}
+    @media (max-width:640px){.horizontal-results{grid-template-columns:1fr}}
+    .measure{border:1px solid var(--border);border-radius:16px;padding:16px;background:linear-gradient(180deg,#fff,#fbfdff)}
+    .measure .name{font-weight:800;font-size:17px}
+    .measure .desc{color:var(--muted);font-size:14px;line-height:1.55;margin-top:8px;min-height:72px}
+    .score{
+      font-family:var(--mono);font-size:12px;color:var(--muted);border:1px solid var(--border);
+      padding:6px 8px;border-radius:10px;background:#f6fafc;display:inline-block;margin-top:10px
+    }
+    .bar{height:10px;border-radius:999px;border:1px solid var(--border);background:#edf3f7;overflow:hidden;margin-top:10px}
+    .bar>span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%}
+    .results-note{margin-top:18px;font-size:15px;color:var(--text);line-height:1.6;font-weight:500}
+
+    .approach-stack{display:flex;flex-direction:column;gap:16px}
+    .info-card{
+      border:1px solid #ccd8e3; border-radius:18px; padding:18px;
+      background:linear-gradient(180deg,#f7fbff,#eef4f8);
+    }
+    .info-card h3{margin:0 0 10px;font-size:16px}
+    .lead{color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 12px}
+    .step-list{display:flex;flex-direction:column;gap:10px;margin-top:24px}
+    .step{display:flex;gap:14px;align-items:center;padding-top:12px;padding-bottom:6px;border-top:1px solid #dfe8f0}
+    .step:first-child{border-top:none;padding-top:0}
+    .step-num{
+      width:30px;height:30px;flex:0 0 30px;border-radius:999px;background:#dfeeff;border:1px solid #c6daf7;
+      color:#2f67cf;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;
+    }
+    .step-text{color:var(--text);font-size:14px;line-height:1.65}
+    .step-text span{color:var(--muted)}
+
+    .question-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    @media (max-width:720px){.question-grid{grid-template-columns:1fr}}
+    .question-chip{
+      border:1px solid #dbe6ee;border-radius:14px;padding:14px 16px;background:#f1f6fa;
+      color:var(--text);font-size:14px;line-height:1.55;
+      display:flex;align-items:center;justify-content:center;text-align:center;min-height:92px;
+    }
+
+    .qa{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+    .q{border:1px solid var(--border);border-radius:16px;padding:16px;background:#fbfdff}
+    .q-top{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+    .q .prompt{font-weight:700;font-size:15px;max-width:84ch}
+    .q .hint{color:var(--muted);font-size:13px;margin-top:6px;line-height:1.55;max-width:78ch}
+    .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    select{
+      background:#fff;border:1px solid #bfd2e2;color:var(--text);border-radius:12px;padding:10px 12px;
+      font-size:14px;outline:none;min-width:180px;appearance:auto;-webkit-appearance:menulist;
+    }
+    select option{background:#fff;color:var(--text)}
+
+    .recommendation{margin-top:18px}
+    .recommendation .title{font-size:22px;font-weight:900;margin:0 0 10px}
+    table{
+      width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border:1px solid var(--border);
+      border-radius:16px;background:#fff;
+    }
+    th,td{padding:12px;border-bottom:1px solid #e2ebf2;font-size:14px;vertical-align:top}
+    th{color:var(--muted);text-align:left;background:#f7fbfe;font-weight:700}
+    tr:last-child td{border-bottom:none}
+    .badge{
+      font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid var(--border);
+      background:#f5f9fc;color:var(--muted);white-space:nowrap;
+    }
+    .footer-note{margin-top:16px;color:var(--muted);font-size:12px;line-height:1.55}
+    .mono{font-family:var(--mono)}
+    a{color:var(--accent); text-decoration:none; font-weight:600;}
+    a:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="header-card">
+        <h1>AD-Sicherheitsmaßnahmen – Unternehmenskurzbericht & Selbst-Check</h1>
+      </div>
+    </header>
+
+    <section id="summary">
+      <div class="section-title"><h2>1) Zusammenfassung</h2></div>
+      <div class="card summary-text">
+        <p>Die Bachelorarbeit befasst sich mit der Frage, wie sich ausgewählte Sicherheitsmaßnahmen zur Absicherung von Active Directory hinsichtlich ihrer Wirkung auf Angriffspfade, Privilegieneskalation und Schadensbegrenzung unterscheiden. Ausgangspunkt ist die Beobachtung, dass Angriffe auf AD-Umgebungen in der Praxis häufig nicht mehr auf einzelne technische Schwachstellen zielen, sondern auf den Missbrauch bestehender Identitäten, Berechtigungen, Vertrauensbeziehungen und Anmeldekontexte. Gerade in historisch gewachsenen Active-Directory-Strukturen entstehen dadurch transitive Berechtigungsnetze, über die sich Angreifer schrittweise zu hochprivilegierten Konten und kritischen Systemen vorarbeiten können.</p>
+        <p>Im Mittelpunkt der Untersuchung stehen vier Maßnahmen, die unterschiedliche Aspekte der AD-Absicherung adressieren: Tiering als strukturelle Trennung administrativer Ebenen, Privileged Access Management als Steuerung temporärer privilegierter Rechte, Privileged Access Workstations als Trennung administrativer Arbeitskontexte von normalen Benutzerumgebungen sowie LAPS zur Begrenzung von Lateral Movement über lokale Administratorkonten.</p>
+        <p>Zur vergleichenden Bewertung dieser Maßnahmen wird ein strukturierter Bewertungsrahmen entwickelt. Die Bewertung basiert auf insgesamt 23 Kriterien, die aus drei unterschiedlichen Perspektiven abgeleitet werden: <a href="https://attack.mitre.org/" target="_blank" rel="noopener noreferrer">MITRE ATT&amp;CK</a>-basierte Kriterien zu typischen Angriffstechniken, <a href="https://doi.org/10.6028/NIST.SP.800-53r5" target="_blank" rel="noopener noreferrer">NIST</a>-basierte Kriterien zu organisatorischen und technischen Sicherheitsprinzipien sowie Kriterien, die sich auf strukturelle Angriffspfade innerhalb von Active-Directory-Umgebungen beziehen.</p>
+        <p>Für jedes dieser Kriterien wird bewertet, welchen Beitrag es zu drei übergeordneten Sicherheitszielen leistet: Prävention, Eskalations- und Ausbreitungshemmung sowie Schadensbegrenzung. Aus diesen Bewertungen wird zunächst ein Score pro Kriterium berechnet, der anschließend normiert wird, um die Gewichtung der Kriterien innerhalb des Bewertungsmodells zu bestimmen. Diese Gewichte werden anschließend verwendet, um die Bewertungen der einzelnen Maßnahmen zu aggregieren und vergleichbare Gesamtscores zu berechnen.</p>
+        <p>Die aggregierten Ergebnisse zeigen im Basisszenario eine klare Rangfolge der Maßnahmen. Tiering erreicht den höchsten Gesamtscore, gefolgt von Privileged Access Management (PAM). Privileged Access Workstations (PAW) liegen im mittleren Bereich, während LAPS geringere Gesamtscores erzielt. Eine ergänzende Sensitivitätsanalyse untersucht zudem die Stabilität dieser Rangfolge unter veränderten Gewichtungsannahmen der Zielkomponenten.</p>
+      </div>
+    </section>
+
+    <section id="results">
+      <div class="section-title"><h2>2) Ergebnisse</h2></div>
+      <div class="card">
+        <div class="horizontal-results" id="baselineList"></div>
+        <p class="results-note"><strong>Einordnung:</strong> Die dargestellte Rangfolge zeigt die Ergebnisse des Bewertungsmodells im Basisszenario und unter idealisierten Bedingungen. Welche Maßnahmen in der Praxis zuerst umgesetzt werden sollten, hängt jedoch stark von der jeweiligen AD-Umgebung und ihrer Ausgangslage ab.</p>
+      </div>
+    </section>
+
+    <section id="approach">
+      <div class="section-title"><h2>3) Vorgehen für Unternehmen</h2></div>
+      <div class="card">
+        <div class="approach-stack">
+          <div class="info-card">
+            <h3>Empfohlene Reihenfolge</h3>
+            <div class="step-list">
+              <div class="step"><div class="step-num">1</div><div class="step-text"><strong>Überblick schaffen:</strong> <span>Sichtbarkeit über privilegierte Konten, kritische Ziele, Angriffspfade und bekannte Fehlkonfigurationen herstellen, z. B. mit Analyse-Tools wie <a href="https://github.com/SpecterOps/BloodHound" target="_blank" rel="noopener noreferrer">BloodHound</a> oder <a href="https://www.pingcastle.com/" target="_blank" rel="noopener noreferrer">PingCastle</a>.</span></div></div>
+              <div class="step"><div class="step-num">2</div><div class="step-text"><strong>Schnell einordnen:</strong> <span>Mit einem kompakten Selbst-Check die eigene Ausgangslage grob bewerten.</span></div></div>
+              <div class="step"><div class="step-num">3</div><div class="step-text"><strong>Priorisieren:</strong> <span>Festlegen, in welchem Problemfeld aktuell der größte Hebel liegt und welche Maßnahme dort am sinnvollsten ansetzt.</span></div></div>
+              <div class="step"><div class="step-num">4</div><div class="step-text"><strong>Vertiefen:</strong> <span>Erst danach detaillierte Analysen, Tooling und konkrete Umsetzungsplanung aufsetzen.</span></div></div>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <h3>Leitfragen für die Einordnung</h3>
+            <p class="lead">Diese Fragen helfen dabei, die eigene Ausgangslage schnell zu strukturieren und den wichtigsten Handlungsbereich einzugrenzen.</p>
+            <div class="question-grid">
+              <div class="question-chip">Wo befinden sich besonders kritische privilegierte Konten und Systeme in der Umgebung?</div>
+              <div class="question-chip">Welche Bereiche oder Identitäten wären für einen Angreifer besonders attraktive Ziele?</div>
+              <div class="question-chip">Welche Angriffspfade führen heute zu hochprivilegierten Konten oder zentralen Systemen?</div>
+              <div class="question-chip">Wo bestehen bereits bekannte strukturelle Schwächen oder Fehlkonfigurationen?</div>
+              <div class="question-chip">Wie stark sind administrative Tätigkeiten vom normalen Benutzerbetrieb getrennt?</div>
+              <div class="question-chip">Wo bestehen dauerhaft privilegierte Rechte, die nur selten tatsächlich benötigt werden?</div>
+              <div class="question-chip">Welche Bereiche hängen besonders stark von einzelnen zentralen Identitäten oder Konten ab?</div>
+              <div class="question-chip">Wie groß wäre die Ausbreitung einer erfolgreichen Kompromittierung in der aktuellen Umgebung?</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="selfcheck">
+      <div class="section-title"><h2>4) Selbst-Check</h2></div>
+      <div class="card">
+        <p class="muted" style="margin:0;line-height:1.65">Schnelle Orientierung, um zentrale Risiken und strukturelle Eigenschaften der eigenen AD-Umgebung einzuordnen. Die Fragen zielen nicht auf eine vollständige technische Analyse ab. Es reicht eine grobe Einschätzung auf Basis des aktuellen Wissens über die eigene Umgebung.</p>
+        <div class="qa" id="quickQA"></div>
+
+        <div class="recommendation">
+          <h3 style="margin:0 0 8px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.2px">Empfehlung</h3>
+          <div class="title" id="recTitle">Noch keine Einordnung</div>
+          <div style="height:1px;background:#e2ebf2;margin:14px 0"></div>
+          <h3 style="margin:0 0 8px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.2px">Priorisierte Reihenfolge</h3>
+          <table aria-label="Roadmap">
+            <thead><tr><th>#</th><th>Maßnahme</th><th>Hinweis</th></tr></thead>
+            <tbody id="roadmapBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const baseline = [
+      { id:"tiering", name:"Tiering", score:2.2037, hint:"Strukturelle Trennung administrativer Ebenen mit starkem Einfluss auf Angriffspfade und Reichweiten." },
+      { id:"pam", name:"PAM", score:1.7778, hint:"Zeitlich und organisatorisch kontrollierter Umgang mit privilegierten Rechten und administrativen Freigaben." },
+      { id:"paw", name:"PAW", score:1.5000, hint:"Getrennter, gehärteter Nutzungskontext für administrative Tätigkeiten und privilegierte Anmeldungen." },
+      { id:"laps", name:"LAPS", score:1.1296, hint:"Begrenzung lateraler Ausbreitung durch individuelle lokale Administratorpasswörter pro System." }
+    ];
+
+    const questions = [
+      {
+        id:"q_context_separation",
+        prompt:"Wie stark sind administrative Tätigkeiten heute mit normalen Benutzergeräten, Alltagskonten oder regulären Nutzungskontexten vermischt?",
+        hint:"Je stärker administrative und normale Nutzungskontexte vermischt sind, desto höher ist das Risiko für Credential-Diebstahl und Missbrauch privilegierter Sitzungen.",
+        weights:{ paw:3, tiering:2, pam:1, laps:0 },
+        options:["Hoch","Mittel","Gering","Unklar"]
+      },
+      {
+        id:"q_attack_paths",
+        prompt:"Wie leicht wäre es nach der Kompromittierung eines normalen Kontos, sich über bestehende Berechtigungen oder Vertrauensbeziehungen in Richtung hochprivilegierter Ziele weiterzubewegen?",
+        hint:"Kurze oder zahlreiche Wege zu privilegierten Zielen sprechen eher für strukturelle Maßnahmen gegen Eskalation und laterale Bewegung.",
+        weights:{ tiering:3, pam:1, paw:1, laps:0 },
+        options:["Hoch","Mittel","Gering","Unklar"]
+      },
+      {
+        id:"q_persistent_privileges",
+        prompt:"Wie stark ist die Umgebung von dauerhaft aktiven privilegierten Rechten abhängig?",
+        hint:"Wenn privilegierte Rechte häufig dauerhaft bestehen, steigt die Attraktivität kompromittierter Konten und Berechtigungen.",
+        weights:{ pam:3, tiering:1, paw:1, laps:0 },
+        options:["Hoch","Mittel","Gering","Unklar"]
+      },
+      {
+        id:"q_local_spread",
+        prompt:"Wie hoch ist das Risiko, dass sich eine lokale Kompromittierung von einem einzelnen System aus auf weitere Systeme ausbreiten kann?",
+        hint:"Wenn identische oder weit nutzbare lokale Berechtigungen bestehen, steigt die Relevanz lokaler Begrenzungsmaßnahmen.",
+        weights:{ laps:3, paw:1, tiering:0, pam:0 },
+        options:["Hoch","Mittel","Gering","Unklar"]
+      },
+      {
+        id:"q_change_capacity",
+        prompt:"Wie realistisch ist es kurzfristig, auch größere organisatorische oder strukturelle Änderungen umzusetzen?",
+        hint:"Diese Frage bewertet nicht das Risiko selbst, sondern die praktische Umsetzbarkeit größerer Maßnahmen im aktuellen Umfeld.",
+        weights:{
+          tiering:(v)=> v==="Hoch" ? 2 : (v==="Mittel" ? 1 : 0),
+          pam:(v)=> v==="Hoch" ? 1 : (v==="Mittel" ? 0.5 : 0),
+          paw:(v)=> v==="Gering" ? 2 : (v==="Mittel" ? 0.5 : 0),
+          laps:(v)=> v==="Gering" ? 1 : 0
+        },
+        options:["Hoch","Mittel","Gering","Unklar"]
+      }
+    ];
+
+    const STORE_KEY = "adsec_scroll_clean_v9";
+    const defaultState = { answers:{} };
+    let state = loadState();
+
+    function loadState(){
+      try{
+        const s = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+        return s ? {...defaultState, ...s} : {...defaultState};
+      }catch(e){ return {...defaultState}; }
+    }
+
+    function saveState(){
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    }
+
+    function answerFactor(ans){
+      if(ans === "Ja" || ans === "Hoch") return 1;
+      if(ans === "Teilweise" || ans === "Mittel") return 0.5;
+      return 0;
+    }
+
+    function renderBaseline(){
+      const list = document.getElementById("baselineList");
+      list.innerHTML = "";
+      const sorted = [...baseline].sort((a,b)=>b.score-a.score);
+      const max = sorted[0].score;
+      sorted.forEach((m, idx)=>{
+        const div = document.createElement("div");
+        div.className = "measure";
+        div.innerHTML = `
+          <div class="name">${idx+1}. ${m.name}</div>
+          <div class="desc">${m.hint}</div>
+          <div class="bar"><span style="width:${Math.round((m.score/max)*100)}%"></span></div>
+          <div class="score">Score: ${m.score.toFixed(4)}</div>`;
+        list.appendChild(div);
+      });
+    }
+
+    function renderQuestions(){
+      const wrap = document.getElementById("quickQA");
+      wrap.innerHTML = "";
+      questions.forEach(q=>{
+        const val = state.answers[q.id] || "";
+        const options = q.options || ["Ja","Teilweise","Nein","Unklar"];
+        const opts = options.map(o => `<option value="${o}" ${val===o?"selected":""}>${o}</option>`).join("");
+        const el = document.createElement("div");
+        el.className = "q";
+        el.innerHTML = `
+          <div class="q-top">
+            <div style="flex:1;min-width:260px">
+              <div class="prompt">${q.prompt}</div>
+              <div class="hint">${q.hint}</div>
+            </div>
+            <div class="controls">
+              <select data-qid="${q.id}">
+                <option value="" ${val===""?"selected":""}>— auswählen —</option>
+                ${opts}
+              </select>
+            </div>
+          </div>`;
+        wrap.appendChild(el);
+      });
+
+      wrap.querySelectorAll("select").forEach(sel=>{
+        sel.addEventListener("change", (e)=>{
+          const id = e.target.getAttribute("data-qid");
+          state.answers[id] = e.target.value;
+          saveState();
+          compute();
+        });
+      });
+    }
+
+    function compute(){
+      const score = { tiering:0, pam:0, paw:0, laps:0 };
+
+      questions.forEach(q=>{
+        const ans = state.answers[q.id];
+        if(!ans) return;
+
+        const factor = answerFactor(ans);
+        Object.entries(q.weights).forEach(([k,w])=>{
+          let add = 0;
+          if(typeof w === "function") add = w(ans) || 0;
+          else add = w * factor;
+          score[k] += add;
+        });
+      });
+
+      const hasAnswers = Object.values(state.answers).some(v=>v);
+      let sorted = Object.entries(score).sort((a,b)=>b[1]-a[1]);
+      if(!hasAnswers) sorted = [];
+
+      const bestId = hasAnswers ? sorted[0][0] : null;
+      const best = baseline.find(m=>m.id===bestId);
+
+      document.getElementById("recTitle").textContent = hasAnswers && best ? best.name : "Noch keine Einordnung";
+
+      const tbody = document.getElementById("roadmapBody");
+      tbody.innerHTML = "";
+
+      if(!hasAnswers){
+        const tr = document.createElement("tr");
+        tr.innerHTML = '<td colspan="3" class="muted">Noch keine Ergebnisse vorhanden. Die Reihenfolge wird nach dem Ausfüllen des Selbst-Checks berechnet.</td>';
+        tbody.appendChild(tr);
+        return;
+      }
+
+      sorted.forEach(([id, sc], i)=>{
+        const m = baseline.find(x=>x.id===id);
+        const hint = (i===0) ? "aktuell höchster Hebel im Self-Check" : "ergänzt die Gesamtabsicherung";
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><span class="badge">${i+1}</span></td>
+          <td><strong>${m.name}</strong><div class="muted" style="font-size:12px;margin-top:4px">${m.hint}</div></td>
+          <td class="muted">${hint}<div class="mono" style="font-size:12px;margin-top:6px">prio: ${sc.toFixed(2)}</div></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    renderBaseline();
+    renderQuestions();
+    compute();
+  </script>
+</body>
+</html>
+"""
+
+path = Path("ad_security_scroll_webview.html")
+path.write_text(html, encoding="utf-8")
+print(str(path))
